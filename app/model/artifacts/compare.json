@@ -1,0 +1,1284 @@
+{
+  "generated_at": "2026-11-12 17:25:09",
+  "model": "FeatureUnion(tfidf-word(1,2) + tfidf-char_wb(3,5) + handcrafted) -> LogisticRegression(C=4, balanced)",
+  "labels": [
+    "gambling",
+    "pyramid",
+    "fraud",
+    "clean"
+  ],
+  "holdout": {
+    "n": 106,
+    "classes": {
+      "pyramid": 28,
+      "fraud": 40,
+      "clean": 35,
+      "gambling": 3
+    }
+  },
+  "old_id": "v00",
+  "new_id": "v09",
+  "versions": [
+    {
+      "id": "v00",
+      "commit": "727807e",
+      "note": "Исходный датасет: ядровые шаблоны, 130 примеров на класс",
+      "stats": {
+        "n": 520,
+        "unique_texts": 520,
+        "classes": {
+          "gambling": 130,
+          "pyramid": 130,
+          "fraud": 130,
+          "clean": 130
+        },
+        "langs": {
+          "ru": 380,
+          "kk": 140
+        },
+        "avg_words": 10.9,
+        "vocab": 463
+      },
+      "removed_holdout_overlap": 0,
+      "fit_sec": 0.18,
+      "in_distribution_f1": {
+        "mean": 0.9969,
+        "std": 0.0038
+      },
+      "holdout": {
+        "accuracy": 0.5472,
+        "macro_f1": 0.6393,
+        "threat_recall": 0.4085,
+        "clean_specificity": 0.8857,
+        "per_class": {
+          "gambling": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "support": 3
+          },
+          "pyramid": {
+            "precision": 0.6667,
+            "recall": 0.4286,
+            "f1": 0.5217,
+            "support": 28
+          },
+          "fraud": {
+            "precision": 1.0,
+            "recall": 0.3,
+            "f1": 0.4615,
+            "support": 40
+          },
+          "clean": {
+            "precision": 0.4247,
+            "recall": 0.8857,
+            "f1": 0.5741,
+            "support": 35
+          }
+        },
+        "confusion_matrix": [
+          [
+            3,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            12,
+            0,
+            16
+          ],
+          [
+            0,
+            2,
+            12,
+            26
+          ],
+          [
+            0,
+            4,
+            0,
+            31
+          ]
+        ]
+      }
+    },
+    {
+      "id": "v01",
+      "commit": "a3b5d08",
+      "note": "Пограничные случаи и трудные негативы (новости, финграмотность, спорт)",
+      "stats": {
+        "n": 1057,
+        "unique_texts": 1057,
+        "classes": {
+          "gambling": 260,
+          "pyramid": 246,
+          "fraud": 234,
+          "clean": 317
+        },
+        "langs": {
+          "ru": 877,
+          "kk": 180
+        },
+        "avg_words": 11.3,
+        "vocab": 790
+      },
+      "removed_holdout_overlap": 0,
+      "fit_sec": 0.38,
+      "in_distribution_f1": {
+        "mean": 0.9366,
+        "std": 0.0094
+      },
+      "holdout": {
+        "accuracy": 0.7075,
+        "macro_f1": 0.7762,
+        "threat_recall": 0.6338,
+        "clean_specificity": 0.9429,
+        "per_class": {
+          "gambling": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "support": 3
+          },
+          "pyramid": {
+            "precision": 0.84,
+            "recall": 0.75,
+            "f1": 0.7925,
+            "support": 28
+          },
+          "fraud": {
+            "precision": 0.9474,
+            "recall": 0.45,
+            "f1": 0.6102,
+            "support": 40
+          },
+          "clean": {
+            "precision": 0.5593,
+            "recall": 0.9429,
+            "f1": 0.7021,
+            "support": 35
+          }
+        },
+        "confusion_matrix": [
+          [
+            3,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            21,
+            1,
+            6
+          ],
+          [
+            0,
+            2,
+            18,
+            20
+          ],
+          [
+            0,
+            2,
+            0,
+            33
+          ]
+        ]
+      }
+    },
+    {
+      "id": "v02",
+      "commit": "716a19d",
+      "note": "Реалистичные промо-формулировки из каналов",
+      "stats": {
+        "n": 1086,
+        "unique_texts": 1086,
+        "classes": {
+          "gambling": 270,
+          "pyramid": 253,
+          "fraud": 242,
+          "clean": 321
+        },
+        "langs": {
+          "ru": 906,
+          "kk": 180
+        },
+        "avg_words": 11.5,
+        "vocab": 941
+      },
+      "removed_holdout_overlap": 0,
+      "fit_sec": 0.44,
+      "in_distribution_f1": {
+        "mean": 0.9233,
+        "std": 0.0173
+      },
+      "holdout": {
+        "accuracy": 0.7925,
+        "macro_f1": 0.8441,
+        "threat_recall": 0.7606,
+        "clean_specificity": 0.9429,
+        "per_class": {
+          "gambling": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "support": 3
+          },
+          "pyramid": {
+            "precision": 0.8889,
+            "recall": 0.8571,
+            "f1": 0.8727,
+            "support": 28
+          },
+          "fraud": {
+            "precision": 0.9231,
+            "recall": 0.6,
+            "f1": 0.7273,
+            "support": 40
+          },
+          "clean": {
+            "precision": 0.66,
+            "recall": 0.9429,
+            "f1": 0.7765,
+            "support": 35
+          }
+        },
+        "confusion_matrix": [
+          [
+            3,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            24,
+            1,
+            3
+          ],
+          [
+            0,
+            2,
+            24,
+            14
+          ],
+          [
+            0,
+            1,
+            1,
+            33
+          ]
+        ]
+      }
+    },
+    {
+      "id": "v03",
+      "commit": "77f6fdb",
+      "note": "Казахстанская специфика: Kaspi/Halyk, тенге, +7 7XX, местные бренды",
+      "stats": {
+        "n": 1242,
+        "unique_texts": 1242,
+        "classes": {
+          "gambling": 307,
+          "pyramid": 311,
+          "fraud": 275,
+          "clean": 349
+        },
+        "langs": {
+          "kk": 256,
+          "ru": 986
+        },
+        "avg_words": 11.4,
+        "vocab": 1074
+      },
+      "removed_holdout_overlap": 0,
+      "fit_sec": 0.49,
+      "in_distribution_f1": {
+        "mean": 0.9196,
+        "std": 0.0142
+      },
+      "holdout": {
+        "accuracy": 0.7925,
+        "macro_f1": 0.8432,
+        "threat_recall": 0.7465,
+        "clean_specificity": 0.9714,
+        "per_class": {
+          "gambling": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "support": 3
+          },
+          "pyramid": {
+            "precision": 0.8929,
+            "recall": 0.8929,
+            "f1": 0.8929,
+            "support": 28
+          },
+          "fraud": {
+            "precision": 0.9565,
+            "recall": 0.55,
+            "f1": 0.6984,
+            "support": 40
+          },
+          "clean": {
+            "precision": 0.6538,
+            "recall": 0.9714,
+            "f1": 0.7816,
+            "support": 35
+          }
+        },
+        "confusion_matrix": [
+          [
+            3,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            25,
+            1,
+            2
+          ],
+          [
+            0,
+            2,
+            22,
+            16
+          ],
+          [
+            0,
+            1,
+            0,
+            34
+          ]
+        ]
+      }
+    },
+    {
+      "id": "v04",
+      "commit": "5bd95bd",
+      "note": "Обфускация текста и выдача себя за публичных лиц",
+      "stats": {
+        "n": 1370,
+        "unique_texts": 1370,
+        "classes": {
+          "gambling": 317,
+          "pyramid": 340,
+          "fraud": 314,
+          "clean": 399
+        },
+        "langs": {
+          "ru": 1114,
+          "kk": 256
+        },
+        "avg_words": 11.6,
+        "vocab": 1157
+      },
+      "removed_holdout_overlap": 0,
+      "fit_sec": 0.58,
+      "in_distribution_f1": {
+        "mean": 0.9342,
+        "std": 0.0143
+      },
+      "holdout": {
+        "accuracy": 0.8019,
+        "macro_f1": 0.85,
+        "threat_recall": 0.7606,
+        "clean_specificity": 0.9714,
+        "per_class": {
+          "gambling": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "support": 3
+          },
+          "pyramid": {
+            "precision": 0.8846,
+            "recall": 0.8214,
+            "f1": 0.8519,
+            "support": 28
+          },
+          "fraud": {
+            "precision": 0.9615,
+            "recall": 0.625,
+            "f1": 0.7576,
+            "support": 40
+          },
+          "clean": {
+            "precision": 0.6667,
+            "recall": 0.9714,
+            "f1": 0.7907,
+            "support": 35
+          }
+        },
+        "confusion_matrix": [
+          [
+            3,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            23,
+            1,
+            4
+          ],
+          [
+            0,
+            2,
+            25,
+            13
+          ],
+          [
+            0,
+            1,
+            0,
+            34
+          ]
+        ]
+      }
+    },
+    {
+      "id": "v05",
+      "commit": "6eb868e",
+      "note": "Англоязычные казино-стримы (Twitch/Kick)",
+      "stats": {
+        "n": 1485,
+        "unique_texts": 1485,
+        "classes": {
+          "gambling": 394,
+          "pyramid": 342,
+          "fraud": 313,
+          "clean": 436
+        },
+        "langs": {
+          "ru": 1229,
+          "kk": 256
+        },
+        "avg_words": 11.7,
+        "vocab": 1359
+      },
+      "removed_holdout_overlap": 0,
+      "fit_sec": 0.62,
+      "in_distribution_f1": {
+        "mean": 0.9232,
+        "std": 0.0129
+      },
+      "holdout": {
+        "accuracy": 0.8019,
+        "macro_f1": 0.8506,
+        "threat_recall": 0.7606,
+        "clean_specificity": 0.9714,
+        "per_class": {
+          "gambling": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "support": 3
+          },
+          "pyramid": {
+            "precision": 0.8929,
+            "recall": 0.8929,
+            "f1": 0.8929,
+            "support": 28
+          },
+          "fraud": {
+            "precision": 0.9583,
+            "recall": 0.575,
+            "f1": 0.7188,
+            "support": 40
+          },
+          "clean": {
+            "precision": 0.6667,
+            "recall": 0.9714,
+            "f1": 0.7907,
+            "support": 35
+          }
+        },
+        "confusion_matrix": [
+          [
+            3,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            25,
+            1,
+            2
+          ],
+          [
+            0,
+            2,
+            23,
+            15
+          ],
+          [
+            0,
+            1,
+            0,
+            34
+          ]
+        ]
+      }
+    },
+    {
+      "id": "v06",
+      "commit": "2eb85da",
+      "note": "Мошенничество, скам, крипто-схемы",
+      "stats": {
+        "n": 1673,
+        "unique_texts": 1673,
+        "classes": {
+          "gambling": 390,
+          "pyramid": 342,
+          "fraud": 445,
+          "clean": 496
+        },
+        "langs": {
+          "ru": 1417,
+          "kk": 256
+        },
+        "avg_words": 12.1,
+        "vocab": 1602
+      },
+      "removed_holdout_overlap": 0,
+      "fit_sec": 0.74,
+      "in_distribution_f1": {
+        "mean": 0.9158,
+        "std": 0.0098
+      },
+      "holdout": {
+        "accuracy": 0.8774,
+        "macro_f1": 0.9064,
+        "threat_recall": 0.8732,
+        "clean_specificity": 0.9714,
+        "per_class": {
+          "gambling": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "support": 3
+          },
+          "pyramid": {
+            "precision": 0.9231,
+            "recall": 0.8571,
+            "f1": 0.8889,
+            "support": 28
+          },
+          "fraud": {
+            "precision": 0.9412,
+            "recall": 0.8,
+            "f1": 0.8649,
+            "support": 40
+          },
+          "clean": {
+            "precision": 0.7907,
+            "recall": 0.9714,
+            "f1": 0.8718,
+            "support": 35
+          }
+        },
+        "confusion_matrix": [
+          [
+            3,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            24,
+            2,
+            2
+          ],
+          [
+            0,
+            1,
+            32,
+            7
+          ],
+          [
+            0,
+            1,
+            0,
+            34
+          ]
+        ]
+      }
+    },
+    {
+      "id": "v07",
+      "commit": "8543aa0",
+      "note": "Финпирамиды HYIP / MLM",
+      "stats": {
+        "n": 1763,
+        "unique_texts": 1763,
+        "classes": {
+          "gambling": 395,
+          "pyramid": 386,
+          "fraud": 463,
+          "clean": 519
+        },
+        "langs": {
+          "ru": 1507,
+          "kk": 256
+        },
+        "avg_words": 12.2,
+        "vocab": 1713
+      },
+      "removed_holdout_overlap": 0,
+      "fit_sec": 0.78,
+      "in_distribution_f1": {
+        "mean": 0.9206,
+        "std": 0.0089
+      },
+      "holdout": {
+        "accuracy": 0.9057,
+        "macro_f1": 0.9276,
+        "threat_recall": 0.9155,
+        "clean_specificity": 0.9714,
+        "per_class": {
+          "gambling": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "support": 3
+          },
+          "pyramid": {
+            "precision": 0.9259,
+            "recall": 0.8929,
+            "f1": 0.9091,
+            "support": 28
+          },
+          "fraud": {
+            "precision": 0.9444,
+            "recall": 0.85,
+            "f1": 0.8947,
+            "support": 40
+          },
+          "clean": {
+            "precision": 0.85,
+            "recall": 0.9714,
+            "f1": 0.9067,
+            "support": 35
+          }
+        },
+        "confusion_matrix": [
+          [
+            3,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            25,
+            2,
+            1
+          ],
+          [
+            0,
+            1,
+            34,
+            5
+          ],
+          [
+            0,
+            1,
+            0,
+            34
+          ]
+        ]
+      }
+    },
+    {
+      "id": "v08",
+      "commit": "e8123c5",
+      "note": "Мошенничество и пирамиды на казахском языке",
+      "stats": {
+        "n": 1854,
+        "unique_texts": 1854,
+        "classes": {
+          "gambling": 390,
+          "pyramid": 412,
+          "fraud": 494,
+          "clean": 558
+        },
+        "langs": {
+          "kk": 347,
+          "ru": 1507
+        },
+        "avg_words": 12.3,
+        "vocab": 1848
+      },
+      "removed_holdout_overlap": 1,
+      "fit_sec": 0.83,
+      "in_distribution_f1": {
+        "mean": 0.9115,
+        "std": 0.0079
+      },
+      "holdout": {
+        "accuracy": 0.9057,
+        "macro_f1": 0.9274,
+        "threat_recall": 0.9014,
+        "clean_specificity": 1.0,
+        "per_class": {
+          "gambling": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "support": 3
+          },
+          "pyramid": {
+            "precision": 0.96,
+            "recall": 0.8571,
+            "f1": 0.9057,
+            "support": 28
+          },
+          "fraud": {
+            "precision": 0.9444,
+            "recall": 0.85,
+            "f1": 0.8947,
+            "support": 40
+          },
+          "clean": {
+            "precision": 0.8333,
+            "recall": 1.0,
+            "f1": 0.9091,
+            "support": 35
+          }
+        },
+        "confusion_matrix": [
+          [
+            3,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            24,
+            2,
+            2
+          ],
+          [
+            0,
+            1,
+            34,
+            5
+          ],
+          [
+            0,
+            0,
+            0,
+            35
+          ]
+        ]
+      }
+    },
+    {
+      "id": "v09",
+      "commit": "0ccd2d7",
+      "note": "Pump-and-dump, cash-gifting, фейковые «советники»",
+      "stats": {
+        "n": 1952,
+        "unique_texts": 1952,
+        "classes": {
+          "gambling": 394,
+          "pyramid": 425,
+          "fraud": 542,
+          "clean": 591
+        },
+        "langs": {
+          "ru": 1603,
+          "kk": 349
+        },
+        "avg_words": 12.3,
+        "vocab": 1962
+      },
+      "removed_holdout_overlap": 1,
+      "fit_sec": 0.85,
+      "in_distribution_f1": {
+        "mean": 0.9102,
+        "std": 0.0103
+      },
+      "holdout": {
+        "accuracy": 0.934,
+        "macro_f1": 0.9474,
+        "threat_recall": 0.9577,
+        "clean_specificity": 1.0,
+        "per_class": {
+          "gambling": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "support": 3
+          },
+          "pyramid": {
+            "precision": 0.96,
+            "recall": 0.8571,
+            "f1": 0.9057,
+            "support": 28
+          },
+          "fraud": {
+            "precision": 0.925,
+            "recall": 0.925,
+            "f1": 0.925,
+            "support": 40
+          },
+          "clean": {
+            "precision": 0.9211,
+            "recall": 1.0,
+            "f1": 0.9589,
+            "support": 35
+          }
+        },
+        "confusion_matrix": [
+          [
+            3,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            24,
+            3,
+            1
+          ],
+          [
+            0,
+            1,
+            37,
+            2
+          ],
+          [
+            0,
+            0,
+            0,
+            35
+          ]
+        ]
+      }
+    }
+  ],
+  "examples": [
+    {
+      "text": "Финансовая грамотность: как защититься от финансовых пирамид. Признаки — обещание гарантированного дохода и доход за привлечение людей. Проверяйте лицензию в реестре АРРФР",
+      "gold": "clean",
+      "old_pred": "pyramid",
+      "old_risk": 78,
+      "new_pred": "clean",
+      "new_risk": 8,
+      "kind": "fixed"
+    },
+    {
+      "text": "Открыл депозит в Halyk Bank под 16% годовых. Вклад застрахован, можно пополнять. Удобно копить на квартиру через мобильное приложение",
+      "gold": "clean",
+      "old_pred": "pyramid",
+      "old_risk": 86,
+      "new_pred": "clean",
+      "new_risk": 29,
+      "kind": "fixed"
+    },
+    {
+      "text": "Полиция задержала организаторов финансовой пирамиды, обещавшей 30% в месяц. Ущерб вкладчикам составил более 200 миллионов тенге",
+      "gold": "clean",
+      "old_pred": "pyramid",
+      "old_risk": 85,
+      "new_pred": "clean",
+      "new_risk": 3,
+      "kind": "fixed"
+    },
+    {
+      "text": "ҚМРА ескертеді: кепілдік табыс уәде ететін және қатысушы тарту арқылы табыс беретін жоба — қаржылық пирамида",
+      "gold": "clean",
+      "old_pred": "pyramid",
+      "old_risk": 91,
+      "new_pred": "clean",
+      "new_risk": 23,
+      "kind": "fixed"
+    },
+    {
+      "text": "Поздравляем! Вы выиграли iPhone 16 Pro в розыгрыше. Чтобы забрать приз, оплатите доставку 7900 тенге по ссылке в течение 30 минут",
+      "gold": "fraud",
+      "old_pred": "clean",
+      "old_risk": 7,
+      "new_pred": "fraud",
+      "new_risk": 94,
+      "kind": "fixed"
+    },
+    {
+      "text": "Я представитель Нацбанка. Вам положена компенсация за обманутых вкладчиков — 340 000 ₸. Назовите данные карты и код, чтобы я перевёл деньги",
+      "gold": "fraud",
+      "old_pred": "clean",
+      "old_risk": 6,
+      "new_pred": "fraud",
+      "new_risk": 98,
+      "kind": "fixed"
+    },
+    {
+      "text": "Работа на дому: ставите лайки и получаете 3000 тенге в день. Для активации аккаунта внесите страховой депозит 10 000 ₸, он вернётся с первой выплатой",
+      "gold": "fraud",
+      "old_pred": "clean",
+      "old_risk": 7,
+      "new_pred": "fraud",
+      "new_risk": 98,
+      "kind": "fixed"
+    },
+    {
+      "text": "Меняю доллары по выгодному курсу без комиссии. Скидываете сумму на карту, я отправляю наличные курьером. Предоплата 50% для брони курса",
+      "gold": "fraud",
+      "old_pred": "clean",
+      "old_risk": 4,
+      "new_pred": "fraud",
+      "new_risk": 93,
+      "kind": "fixed"
+    },
+    {
+      "text": "Налоговая: за вами числится задолженность. Оплатите 18 400 ₸ по этой ссылке сегодня, иначе дело передадут судебным исполнителям и заблокируют счета",
+      "gold": "fraud",
+      "old_pred": "clean",
+      "old_risk": 7,
+      "new_pred": "fraud",
+      "new_risk": 84,
+      "kind": "fixed"
+    },
+    {
+      "text": "Отправь 1000 тенге на этот кошелёк — верну 2000 через 10 минут. Проверено тысячами людей, акция от криптобиржи, лимит 500 участников",
+      "gold": "fraud",
+      "old_pred": "clean",
+      "old_risk": 50,
+      "new_pred": "fraud",
+      "new_risk": 76,
+      "kind": "fixed"
+    },
+    {
+      "text": "Секретная стратегия заработка на криптовалюте. Закидываешь на нашу биржу 100$, бот торгует, через неделю снимаешь 400$. Гарантия возврата",
+      "gold": "fraud",
+      "old_pred": "clean",
+      "old_risk": 9,
+      "new_pred": "fraud",
+      "new_risk": 96,
+      "kind": "fixed"
+    },
+    {
+      "text": "USDT по курсу ниже рынка, моментальный обмен. Скидываешь тенге на карту — получаешь крипту. Первым 20 клиентам бонус 5%. Работаем без эскроу",
+      "gold": "fraud",
+      "old_pred": "clean",
+      "old_risk": 40,
+      "new_pred": "fraud",
+      "new_risk": 79,
+      "kind": "fixed"
+    },
+    {
+      "text": "Гарантированный заработок на арбитраже криптовалют. Покупаешь курс за 199$ и зарабатываешь от 500$ в неделю. Количество мест ограничено",
+      "gold": "fraud",
+      "old_pred": "pyramid",
+      "old_risk": 91,
+      "new_pred": "fraud",
+      "new_risk": 87,
+      "kind": "fixed"
+    },
+    {
+      "text": "Поздравляем, ваш номер выбран для получения гранта 500 000 ₸ от фонда поддержки. Для зачисления подтвердите реквизиты карты и оплатите налог 5%",
+      "gold": "fraud",
+      "old_pred": "clean",
+      "old_risk": 5,
+      "new_pred": "fraud",
+      "new_risk": 99,
+      "kind": "fixed"
+    },
+    {
+      "text": "P2P-арбитраж криптовалют на нашей площадке: покупаешь дешевле, продаёшь дороже, профит для новичков гарантирован",
+      "gold": "fraud",
+      "old_pred": "clean",
+      "old_risk": 7,
+      "new_pred": "fraud",
+      "new_risk": 96,
+      "kind": "fixed"
+    },
+    {
+      "text": "Здравствуйте, это служба безопасности банка, зафиксирована попытка списания. Чтобы отменить, установите приложение по ссылке и войдите",
+      "gold": "fraud",
+      "old_pred": "clean",
+      "old_risk": 5,
+      "new_pred": "fraud",
+      "new_risk": 93,
+      "kind": "fixed"
+    },
+    {
+      "text": "Шұғыл! Банк қауіпсіздік қызметі: картаңыз бұғатталды, ашу үшін 5000 теңге аударып, смс кодын айтыңыз",
+      "gold": "fraud",
+      "old_pred": "clean",
+      "old_risk": 6,
+      "new_pred": "fraud",
+      "new_risk": 94,
+      "kind": "fixed"
+    },
+    {
+      "text": "Құттықтаймыз, сіз ұтып алдыңыз! Жүлдені алу үшін жеткізу ақысын бүгін сілтеме арқылы төлеңіз",
+      "gold": "fraud",
+      "old_pred": "clean",
+      "old_risk": 17,
+      "new_pred": "fraud",
+      "new_risk": 70,
+      "kind": "fixed"
+    },
+    {
+      "text": "Салық қызметі: сізде қарыз бар, бүгін сілтеме арқылы төлеңіз, әйтпесе шотыңыз бұғатталады",
+      "gold": "fraud",
+      "old_pred": "clean",
+      "old_risk": 7,
+      "new_pred": "fraud",
+      "new_risk": 93,
+      "kind": "fixed"
+    },
+    {
+      "text": "Поддержка биржи: обнаружена подозрительная активность, подтвердите seed-фразу кошелька для разблокировки доступа",
+      "gold": "fraud",
+      "old_pred": "clean",
+      "old_risk": 33,
+      "new_pred": "fraud",
+      "new_risk": 98,
+      "kind": "fixed"
+    },
+    {
+      "text": "Новая монета взлетит x50 на следующей неделе, инсайд от команды разработчиков, закупайтесь сейчас пока дёшево",
+      "gold": "fraud",
+      "old_pred": "clean",
+      "old_risk": 4,
+      "new_pred": "fraud",
+      "new_risk": 95,
+      "kind": "fixed"
+    },
+    {
+      "text": "Airdrop токенов: выполни простые задания, подключи кошелёк и получи 500 токенов бесплатно, лимит по времени",
+      "gold": "fraud",
+      "old_pred": "clean",
+      "old_risk": 47,
+      "new_pred": "fraud",
+      "new_risk": 93,
+      "kind": "fixed"
+    },
+    {
+      "text": "Я личный инвест-советник, помогу приумножить капитал на бирже, минимальный вклад 1000 долларов, доход еженедельно",
+      "gold": "fraud",
+      "old_pred": "clean",
+      "old_risk": 5,
+      "new_pred": "fraud",
+      "new_risk": 87,
+      "kind": "fixed"
+    },
+    {
+      "text": "Срочный сбор на лечение, переведите любую сумму на личную карту Kaspi, чеков и отчётов не предоставляем",
+      "gold": "fraud",
+      "old_pred": "clean",
+      "old_risk": 5,
+      "new_pred": "fraud",
+      "new_risk": 58,
+      "kind": "fixed"
+    },
+    {
+      "text": "Отсканируйте QR-код для получения компенсации от государства и введите данные карты на открывшемся сайте",
+      "gold": "fraud",
+      "old_pred": "clean",
+      "old_risk": 4,
+      "new_pred": "fraud",
+      "new_risk": 87,
+      "kind": "fixed"
+    },
+    {
+      "text": "Брат, выручи, попал в неприятную ситуацию за границей, переведи сколько можешь, верну с процентами на той неделе",
+      "gold": "fraud",
+      "old_pred": "clean",
+      "old_risk": 5,
+      "new_pred": "fraud",
+      "new_risk": 59,
+      "kind": "fixed"
+    },
+    {
+      "text": "Познакомились в приложении, он научил меня зарабатывать на крипте, я уже вывела прибыль, давай покажу тебе платформу для входа",
+      "gold": "fraud",
+      "old_pred": "clean",
+      "old_risk": 4,
+      "new_pred": "fraud",
+      "new_risk": 67,
+      "kind": "fixed"
+    },
+    {
+      "text": "Кредит без отказа и проверки кредитной истории, переведите комиссию за оформление и получите деньги на карту в течение часа",
+      "gold": "fraud",
+      "old_pred": "clean",
+      "old_risk": 6,
+      "new_pred": "fraud",
+      "new_risk": 61,
+      "kind": "fixed"
+    },
+    {
+      "text": "Бинарные опционы: ставь на рост или падение, удваивай счёт за минуты, регистрируйся у брокера по ссылке в профиле",
+      "gold": "fraud",
+      "old_pred": "clean",
+      "old_risk": 51,
+      "new_pred": "fraud",
+      "new_risk": 61,
+      "kind": "fixed"
+    },
+    {
+      "text": "Финансовая подушка за 6 месяцев без работы. Вкладываешь раз — получаешь пожизненные выплаты от компании. Не успеешь — места разберут",
+      "gold": "pyramid",
+      "old_pred": "clean",
+      "old_risk": 5,
+      "new_pred": "pyramid",
+      "new_risk": 84,
+      "kind": "fixed"
+    },
+    {
+      "text": "Не работа, а система. Покупаешь пакет за 200$, выходишь на доход 2000$ в месяц через структуру партнёров. Обучение бесплатно",
+      "gold": "pyramid",
+      "old_pred": "clean",
+      "old_risk": 11,
+      "new_pred": "pyramid",
+      "new_risk": 97,
+      "kind": "fixed"
+    },
+    {
+      "text": "Вложил 1000$ — снял 3000$ за месяц. Это не магия, это математика бинарной матрицы. Залетай в команду лидеров, пока топ-места свободны",
+      "gold": "pyramid",
+      "old_pred": "clean",
+      "old_risk": 11,
+      "new_pred": "pyramid",
+      "new_risk": 94,
+      "kind": "fixed"
+    },
+    {
+      "text": "Программа лояльности нового поколения: каждый партнёр приносит тебе процент. Создай свою сеть и живи на пассив. Стартовый взнос всего 25 000 тг",
+      "gold": "pyramid",
+      "old_pred": "clean",
+      "old_risk": 8,
+      "new_pred": "pyramid",
+      "new_risk": 84,
+      "kind": "fixed"
+    },
+    {
+      "text": "Реальные отзывы участников: за полгода в проекте я вышла на доход 400 000 тенге в месяц, просто приглашая людей в команду. Спасибо наставнику!",
+      "gold": "pyramid",
+      "old_pred": "clean",
+      "old_risk": 12,
+      "new_pred": "pyramid",
+      "new_risk": 98,
+      "kind": "fixed"
+    },
+    {
+      "text": "Наша компания развивает сеть представителей по всему Казахстану. Покупаешь стартовый набор, строишь команду — получаешь процент с оборота всей структуры",
+      "gold": "pyramid",
+      "old_pred": "clean",
+      "old_risk": 6,
+      "new_pred": "pyramid",
+      "new_risk": 67,
+      "kind": "fixed"
+    },
+    {
+      "text": "Бинарная матрица заполняется автоматически, ты получаешь доход с обеих веток структуры, просто пригласи двоих и расти",
+      "gold": "pyramid",
+      "old_pred": "clean",
+      "old_risk": 7,
+      "new_pred": "pyramid",
+      "new_risk": 94,
+      "kind": "fixed"
+    },
+    {
+      "text": "Пожизненные выплаты после единственного входа: вложил один раз — компания платит каждый месяц, места в матрице тают",
+      "gold": "pyramid",
+      "old_pred": "clean",
+      "old_risk": 7,
+      "new_pred": "pyramid",
+      "new_risk": 91,
+      "kind": "fixed"
+    },
+    {
+      "text": "Вошёл в проект с 500$, через 40 дней вывел 1500$, всё прозрачно, реинвест удваивает капитал, залетай в команду основателей",
+      "gold": "pyramid",
+      "old_pred": "clean",
+      "old_risk": 10,
+      "new_pred": "pyramid",
+      "new_risk": 92,
+      "kind": "fixed"
+    },
+    {
+      "text": "Қаржылық бостандыққа қол жеткіз: бір рет сал, өмір бойы төлем ал, матрицада орындар азайып барады",
+      "gold": "pyramid",
+      "old_pred": "clean",
+      "old_risk": 7,
+      "new_pred": "pyramid",
+      "new_risk": 93,
+      "kind": "fixed"
+    },
+    {
+      "text": "Касса взаимопомощи: внеси 50 000, получи 150 000 когда круг замкнётся, чем больше людей в кругу — тем быстрее выплата",
+      "gold": "pyramid",
+      "old_pred": "clean",
+      "old_risk": 10,
+      "new_pred": "pyramid",
+      "new_risk": 98,
+      "kind": "fixed"
+    },
+    {
+      "text": "Дарим друг другу деньги по системе: ты даришь одному участнику — тебе дарят восемь, всё на доверии и взаимовыручке",
+      "gold": "pyramid",
+      "old_pred": "clean",
+      "old_risk": 5,
+      "new_pred": "pyramid",
+      "new_risk": 92,
+      "kind": "fixed"
+    },
+    {
+      "text": "Зарабатывай на продаже нашей косметики и получай процент с продаж всех, кого приведёшь в свою команду партнёров",
+      "gold": "pyramid",
+      "old_pred": "clean",
+      "old_risk": 7,
+      "new_pred": "pyramid",
+      "new_risk": 79,
+      "kind": "fixed"
+    },
+    {
+      "text": "Клуб успешных людей: вступительный взнос, обучение от наставника и доход, который растёт когда приводишь новых членов в команду",
+      "gold": "pyramid",
+      "old_pred": "clean",
+      "old_risk": 6,
+      "new_pred": "pyramid",
+      "new_risk": 96,
+      "kind": "fixed"
+    },
+    {
+      "text": "Инвестируй 50 000 ₸ и получай 12% в неделю на автопилоте. Вывод хоть каждый день, тело депозита не трогаем. Места в пуле ограничены, успей зайти",
+      "gold": "pyramid",
+      "old_pred": "pyramid",
+      "old_risk": 98,
+      "new_pred": "fraud",
+      "new_risk": 97,
+      "kind": "regressed"
+    },
+    {
+      "text": "Облачный майнинг без оборудования: платишь 150$ за контракт, получаешь 9$ в день пожизненно. Вывод от 10$, реферальный бонус 7%",
+      "gold": "pyramid",
+      "old_pred": "pyramid",
+      "old_risk": 66,
+      "new_pred": "fraud",
+      "new_risk": 95,
+      "kind": "regressed"
+    }
+  ],
+  "summary": {
+    "fixed": 43,
+    "regressed": 2
+  }
+}

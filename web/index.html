@@ -2007,6 +2007,229 @@
       </div>
     </section>
 
+    <!-- ============================================================= -->
+    <!-- View: СТАРЫЙ vs НОВЫЙ ДАТАСЕТ (Assignment #2, вариант B)       -->
+    <!-- ============================================================= -->
+    <section x-show="tab === 'compare'" x-cloak class="space-y-5">
+      <!-- шапка эксперимента -->
+      <div class="rounded-card border border-line bg-surface shadow-diffuse p-5">
+        <div class="flex items-start gap-3">
+          <span class="grid place-items-center w-9 h-9 rounded-soft border border-line text-ink shrink-0">
+            <i class="ph ph-flask text-[18px]"></i>
+          </span>
+          <div class="min-w-0">
+            <h2 class="text-[15px] font-semibold tracking-tight">Старый vs новый датасет: что даёт расширение данных</h2>
+            <p class="text-[12px] text-muted mt-1 leading-snug max-w-[900px]">
+              Модель одна и та же (TF-IDF слов и символов + ручные признаки → логистическая регрессия).
+              Меняется <b>только обучающий датасет</b>: исходный против расширенного синтетическими данными
+              (трудные негативы, казахский язык, новые схемы мошенничества). Обе модели проверяются на одном
+              <b>отложенном наборе</b> из <span class="font-mono tnum" x-text="cmp ? cmp.holdout.n : '—'"></span>
+              реалистичных постов, которого нет ни в одной версии датасета
+              (совпадения с ним автоматически исключаются из обучения).
+            </p>
+          </div>
+          <button @click="runCompare()" :disabled="cmpRunning"
+                  class="lift ml-auto shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-soft border border-line bg-canvas text-[12px] font-medium hover:bg-surface disabled:opacity-50">
+            <i class="ph text-[14px]" :class="cmpRunning ? 'ph-circle-notch animate-spin' : 'ph-play'"></i>
+            <span x-text="cmpRunning ? (cmpStage || 'Обучение…') : 'Перезапустить эксперимент'"></span>
+          </button>
+        </div>
+        <div x-show="cmpRunning" x-cloak class="mt-3 h-1.5 rounded-full bg-canvas overflow-hidden">
+          <div class="h-full bg-ink/70 transition-all" :style="'width:' + cmpProgress + '%'"></div>
+        </div>
+        <div x-show="cmpError" x-cloak role="alert" class="mt-3 rounded-soft border border-[#F3D5D5] bg-[#FDEBEC] text-[#9F2F2D] text-[12px] px-3 py-2 flex items-start gap-2">
+          <i class="ph ph-warning-circle text-[14px] mt-px shrink-0"></i><span x-text="cmpError"></span>
+        </div>
+        <p x-show="cmp" class="mt-2 text-[11px] text-muted">
+          Последний прогон: <span class="font-mono" x-text="cmp && cmp.generated_at"></span>
+        </p>
+      </div>
+
+      <template x-if="cmp">
+        <div class="space-y-5">
+          <!-- два датасета рядом -->
+          <div class="grid grid-cols-12 gap-5">
+            <template x-for="side in cmpSides()" :key="side.key">
+              <div class="col-span-12 md:col-span-6 chart-card">
+                <div class="flex items-baseline gap-2">
+                  <h3 class="section-h !mb-0" x-text="side.title"></h3>
+                  <span class="text-[11px] text-muted font-mono" x-text="side.v.id + ' · ' + side.v.commit"></span>
+                </div>
+                <p class="text-[12px] text-muted mt-1" x-text="side.key === 'old' ? side.v.note : 'Исходный + 9 волн синтетического расширения'"></p>
+                <div class="grid grid-cols-4 gap-3 mt-4">
+                  <div><div class="text-[11px] text-muted">строк</div><div class="font-mono tnum text-[18px]" x-text="side.v.stats.n"></div></div>
+                  <div><div class="text-[11px] text-muted">уникальных</div><div class="font-mono tnum text-[18px]" x-text="side.v.stats.unique_texts"></div></div>
+                  <div><div class="text-[11px] text-muted">словарь</div><div class="font-mono tnum text-[18px]" x-text="side.v.stats.vocab"></div></div>
+                  <div><div class="text-[11px] text-muted">слов в посте</div><div class="font-mono tnum text-[18px]" x-text="side.v.stats.avg_words"></div></div>
+                </div>
+                <div class="mt-4 space-y-1.5">
+                  <template x-for="c in cmp.labels" :key="c">
+                    <div class="flex items-center gap-3 text-[12px]">
+                      <span class="w-28 truncate" x-text="cmpCat(c)"></span>
+                      <div class="flex-1 h-2 rounded-full bg-canvas overflow-hidden">
+                        <div class="h-full rounded-full bg-ink/70" :style="'width:' + (100 * side.v.stats.classes[c] / cmpMaxClass()) + '%'"></div>
+                      </div>
+                      <span class="font-mono tnum text-muted w-10 text-right" x-text="side.v.stats.classes[c]"></span>
+                    </div>
+                  </template>
+                </div>
+                <p class="text-[11px] text-muted mt-3" x-text="'языки: ' + cmpLangs(side.v.stats.langs)"></p>
+              </div>
+            </template>
+          </div>
+
+          <!-- KPI на отложенном наборе -->
+          <div class="chart-card">
+            <h3 class="section-h">Качество на отложенном наборе: старый → новый</h3>
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              <template x-for="k in cmpKpis()" :key="k.key">
+                <div class="rounded-soft border border-line p-4">
+                  <div class="text-[12px] text-muted" x-text="k.label"></div>
+                  <div class="mt-2 flex items-baseline gap-2">
+                    <span class="font-mono tnum text-[15px] text-muted" x-text="cmpPct(k.old)"></span>
+                    <i class="ph ph-arrow-right text-[13px] text-muted"></i>
+                    <span class="font-mono tnum text-[24px] font-semibold" x-text="cmpPct(k.new)"></span>
+                  </div>
+                  <div class="mt-1 text-[12px] font-mono tnum"
+                       :class="k.new >= k.old ? 'text-[#346538]' : 'text-[#9F2F2D]'"
+                       x-text="(k.new >= k.old ? '+' : '') + (100 * (k.new - k.old)).toFixed(1) + ' п.п.'"></div>
+                  <div class="text-[11px] text-muted mt-1 leading-snug" x-text="k.hint"></div>
+                </div>
+              </template>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-12 gap-5">
+            <div class="col-span-12 lg:col-span-6 chart-card">
+              <h3 class="section-h">Recall по классам (отложенный набор)</h3>
+              <div class="h-64"><canvas id="chartCmpClass"></canvas></div>
+            </div>
+            <div class="col-span-12 lg:col-span-6 chart-card">
+              <h3 class="section-h">Ловушка синтетики: внутренний F1 против реального</h3>
+              <div class="h-64"><canvas id="chartCmpGap"></canvas></div>
+              <p class="text-[11px] text-muted mt-2 leading-snug">
+                На своём же 25%-срезе старый датасет даёт почти идеальный F1: модель запоминает шаблоны.
+                На реальных постах этого качества нет. Новый датасет сложнее, поэтому внутренний F1 ниже,
+                а реальный выше.
+              </p>
+            </div>
+            <div class="col-span-12 chart-card">
+              <h3 class="section-h">Как росло качество с каждой волной расширения</h3>
+              <div class="h-72"><canvas id="chartCmpCurve"></canvas></div>
+              <div class="mt-3 grid md:grid-cols-2 gap-x-6 gap-y-1">
+                <template x-for="v in cmp.versions" :key="v.id">
+                  <div class="text-[12px] flex gap-2">
+                    <span class="font-mono text-muted w-8 shrink-0" x-text="v.id"></span>
+                    <span class="font-mono tnum text-muted w-12 shrink-0 text-right" x-text="v.stats.n"></span>
+                    <span x-text="v.note"></span>
+                  </div>
+                </template>
+              </div>
+            </div>
+          </div>
+
+          <!-- матрицы ошибок -->
+          <div class="grid grid-cols-12 gap-5">
+            <template x-for="side in cmpSides()" :key="side.key">
+              <div class="col-span-12 md:col-span-6 chart-card">
+                <h3 class="section-h" x-text="'Матрица ошибок · ' + side.title.toLowerCase()"></h3>
+                <table class="w-full text-[12px] tnum">
+                  <thead>
+                    <tr class="text-muted">
+                      <th class="text-left font-normal pb-1">истина ↓ / прогноз →</th>
+                      <template x-for="c in cmp.labels" :key="c"><th class="font-normal pb-1 text-center" x-text="cmpCat(c)"></th></template>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <template x-for="(row, i) in side.v.holdout.confusion_matrix" :key="i">
+                      <tr>
+                        <td class="py-1 pr-2" x-text="cmpCat(cmp.labels[i])"></td>
+                        <template x-for="(n, j) in row" :key="j">
+                          <td class="py-1 text-center font-mono">
+                            <span class="inline-block min-w-[36px] px-1.5 py-1 rounded-soft"
+                                  :class="n === 0 ? 'text-muted' : (i === j ? 'bg-[#EDF3EC] text-[#346538] font-semibold' : 'bg-[#FDEBEC] text-[#9F2F2D]')"
+                                  x-text="n"></span>
+                          </td>
+                        </template>
+                      </tr>
+                    </template>
+                  </tbody>
+                </table>
+              </div>
+            </template>
+          </div>
+
+          <!-- живая проверка двумя моделями -->
+          <div class="chart-card">
+            <h3 class="section-h">Проверьте сами: один текст, две модели</h3>
+            <textarea x-model="cmpText" rows="3" placeholder="Вставьте текст поста на русском или казахском…"
+                      class="w-full rounded-soft border border-line bg-canvas px-3 py-2 text-[13px] focus:outline-none focus:ring-2 focus:ring-ink/10"></textarea>
+            <div class="mt-2 flex flex-wrap items-center gap-2">
+              <button @click="cmpPredict()" :disabled="cmpPredicting || !cmpText.trim()"
+                      class="lift inline-flex items-center gap-1.5 px-3 py-1.5 rounded-soft bg-ink text-white text-[12px] font-medium disabled:opacity-40">
+                <i class="ph text-[14px]" :class="cmpPredicting ? 'ph-circle-notch animate-spin' : 'ph-scales'"></i>Сравнить
+              </button>
+              <span class="text-[11px] text-muted ml-2">примеры:</span>
+              <template x-for="(ex, i) in cmpSamples()" :key="i">
+                <button @click="cmpText = ex.text; cmpPredict()" class="lift text-[11px] px-2 py-1 rounded-full border border-line bg-surface hover:bg-canvas max-w-[260px] truncate" x-text="ex.text"></button>
+              </template>
+            </div>
+            <div x-show="cmpPredictError" x-cloak class="mt-2 text-[12px] text-[#9F2F2D]" x-text="cmpPredictError"></div>
+            <div x-show="cmpPred" x-cloak class="mt-4 grid md:grid-cols-2 gap-4">
+              <template x-for="side in cmpSides()" :key="side.key">
+                <div class="rounded-soft border border-line p-4" x-show="cmpPred && cmpPred[side.key]">
+                  <div class="flex items-center gap-2">
+                    <span class="text-[12px] text-muted" x-text="'Модель · ' + side.title.toLowerCase()"></span>
+                    <span class="ml-auto text-[12px] px-2 py-0.5 rounded-full border"
+                          :class="cmpRiskClass(cmpPred ? cmpPred[side.key].risk : 0)"
+                          x-text="cmpPred ? cmpCat(cmpPred[side.key].category) + ' · риск ' + cmpPred[side.key].risk : ''"></span>
+                  </div>
+                  <div class="mt-3 space-y-1.5">
+                    <template x-for="c in cmp.labels" :key="c">
+                      <div class="flex items-center gap-3 text-[12px]">
+                        <span class="w-28 truncate" x-text="cmpCat(c)"></span>
+                        <div class="flex-1 h-2 rounded-full bg-canvas overflow-hidden">
+                          <div class="h-full rounded-full bg-ink/70" :style="'width:' + (cmpPred ? 100 * cmpPred[side.key].probs[c] : 0) + '%'"></div>
+                        </div>
+                        <span class="font-mono tnum text-muted w-12 text-right" x-text="cmpPred ? cmpPct(cmpPred[side.key].probs[c]) : ''"></span>
+                      </div>
+                    </template>
+                  </div>
+                </div>
+              </template>
+            </div>
+          </div>
+
+          <!-- примеры, где модели расходятся -->
+          <div class="chart-card">
+            <div class="flex items-baseline gap-3">
+              <h3 class="section-h !mb-0">Где новый датасет помог (и где нет)</h3>
+              <span class="text-[12px] text-muted">
+                исправлено <b class="text-[#346538] font-mono" x-text="cmp.summary.fixed"></b> ·
+                ухудшено <b class="text-[#9F2F2D] font-mono" x-text="cmp.summary.regressed"></b>
+                из <span class="font-mono" x-text="cmp.holdout.n"></span>
+              </span>
+            </div>
+            <div class="mt-3 divide-y divide-line max-h-[420px] overflow-auto">
+              <template x-for="(e, i) in cmp.examples" :key="i">
+                <div class="py-2 flex items-start gap-3 text-[12px]">
+                  <span class="shrink-0 mt-0.5 px-1.5 py-0.5 rounded-full text-[11px]"
+                        :class="e.kind === 'fixed' ? 'bg-[#EDF3EC] text-[#346538]' : 'bg-[#FDEBEC] text-[#9F2F2D]'"
+                        x-text="e.kind === 'fixed' ? 'исправлено' : 'ухудшено'"></span>
+                  <span class="flex-1 min-w-0 leading-snug" x-text="e.text"></span>
+                  <span class="shrink-0 text-[11px] leading-snug w-56 grid grid-cols-[52px_1fr] gap-x-2">
+                    <span class="text-muted">истина</span><span x-text="cmpCat(e.gold)"></span>
+                    <span class="text-muted">старая</span><span x-text="cmpCat(e.old_pred) + ' · риск ' + e.old_risk"></span>
+                    <span class="text-muted">новая</span><span x-text="cmpCat(e.new_pred) + ' · риск ' + e.new_risk"></span>
+                  </span>
+                </div>
+              </template>
+            </div>
+          </div>
+        </div>
+      </template>
+    </section>
+
   </main>
 </body>
 </html>

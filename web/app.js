@@ -118,7 +118,19 @@ function kozApp() {
       { id: "watch", label: "Мониторинг", icon: "ph-binoculars" },
       { id: "live", label: "Живая проверка", icon: "ph-shield-check" },
       { id: "registry", label: "Реестр лицензий", icon: "ph-seal-check" },
+      { id: "compare", label: "Старый vs новый", icon: "ph-flask" },
     ],
+
+    // --- «Старый vs новый датасет» (GET /api/compare, POST /api/compare/predict|run) ---
+    cmp: null,
+    cmpError: "",
+    cmpRunning: false,
+    cmpStage: "",
+    cmpProgress: 0,
+    cmpText: "",
+    cmpPred: null,
+    cmpPredicting: false,
+    cmpPredictError: "",
 
     // --- top bar ---
     macroF1: null,
@@ -381,6 +393,176 @@ function kozApp() {
         this.loadWatchStats();
       }
       if (id === "registry") this.loadRegistry();
+      if (id === "compare") this.loadCompare();
+    },
+
+    // ===================================================== старый vs новый датасет
+    async loadCompare() {
+      this.cmpError = "";
+      try {
+        const r = await fetch("/api/compare");
+        const d = await r.json();
+        if (!r.ok) throw new Error(d.detail || "HTTP " + r.status);
+        this.cmp = d;
+        this.$nextTick(() => this.renderCompareCharts());
+      } catch (e) {
+        this.cmpError = "Не удалось загрузить результаты: " + e.message;
+      }
+    },
+    cmpOld() {
+      return this.cmp.versions[0];
+    },
+    cmpNew() {
+      return this.cmp.versions[this.cmp.versions.length - 1];
+    },
+    cmpSides() {
+      return [
+        { key: "old", title: "Старый датасет", v: this.cmpOld() },
+        { key: "new", title: "Новый датасет", v: this.cmpNew() },
+      ];
+    },
+    cmpCat(c) {
+      return CATEGORY_LABELS[c] || c;
+    },
+    cmpPct(x) {
+      return typeof x === "number" ? (100 * x).toFixed(1) + "%" : "—";
+    },
+    cmpLangs(langs) {
+      const names = { ru: "русский", kk: "казахский" };
+      return Object.entries(langs || {}).map(([k, n]) => (names[k] || k) + " " + n).join(" · ");
+    },
+    cmpMaxClass() {
+      let m = 1;
+      for (const v of [this.cmpOld(), this.cmpNew()]) {
+        for (const n of Object.values(v.stats.classes)) m = Math.max(m, n);
+      }
+      return m;
+    },
+    cmpRiskClass(risk) {
+      if (risk >= 70) return "bg-[#FDEBEC] text-[#9F2F2D] border-[#F3D5D5]";
+      if (risk >= 40) return "bg-[#FBF3DB] text-[#956400] border-[#F0E2B6]";
+      return "bg-[#EDF3EC] text-[#346538] border-[#CFE2D0]";
+    },
+    cmpKpis() {
+      const o = this.cmpOld().holdout, n = this.cmpNew().holdout;
+      return [
+        { key: "acc", label: "Accuracy", old: o.accuracy, new: n.accuracy, hint: "доля верно классифицированных постов" },
+        { key: "f1", label: "Macro-F1", old: o.macro_f1, new: n.macro_f1, hint: "среднее F1 по 4 классам" },
+        { key: "tr", label: "Пойманные угрозы", old: o.threat_recall, new: n.threat_recall, hint: "опасные посты, не принятые за «чисто»" },
+        { key: "sp", label: "Без ложной тревоги", old: o.clean_specificity, new: n.clean_specificity, hint: "чистые посты, оставленные чистыми" },
+      ];
+    },
+    cmpSamples() {
+      // по одному «исправленному» примеру на класс — наглядно для демо
+      if (!this.cmp) return [];
+      const seen = new Set(), out = [];
+      for (const e of this.cmp.examples) {
+        if (e.kind === "fixed" && !seen.has(e.gold)) { seen.add(e.gold); out.push(e); }
+      }
+      return out.slice(0, 4);
+    },
+    async cmpPredict() {
+      const text = this.cmpText.trim();
+      if (!text) return;
+      this.cmpPredicting = true;
+      this.cmpPredictError = "";
+      try {
+        const r = await fetch("/api/compare/predict", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text }),
+        });
+        const d = await r.json();
+        if (!r.ok) throw new Error(d.detail || "HTTP " + r.status);
+        this.cmpPred = d;
+      } catch (e) {
+        this.cmpPredictError = "Ошибка: " + e.message;
+      } finally {
+        this.cmpPredicting = false;
+      }
+    },
+    async runCompare() {
+      this.cmpRunning = true;
+      this.cmpError = "";
+      this.cmpStage = "Запуск…";
+      this.cmpProgress = 0;
+      try {
+        const r = await fetch("/api/compare/run", { method: "POST" });
+        const d = await r.json();
+        if (!r.ok) throw new Error(d.detail || "HTTP " + r.status);
+        for (;;) {
+          await new Promise((res) => setTimeout(res, 800));
+          const jr = await fetch("/api/jobs/" + encodeURIComponent(d.job_id));
+          const j = await jr.json();
+          this.cmpStage = j.stage || this.cmpStage;
+          this.cmpProgress = j.progress || 0;
+          if (j.status === "done") break;
+          if (j.status === "error") throw new Error(j.error || "ошибка задачи");
+        }
+        await this.loadCompare();
+        if (this.cmpText.trim()) await this.cmpPredict();
+      } catch (e) {
+        this.cmpError = "Эксперимент не выполнен: " + e.message;
+      } finally {
+        this.cmpRunning = false;
+      }
+    },
+    renderCompareCharts() {
+      if (!this.cmp) return;
+      const o = this.cmpOld(), n = this.cmpNew();
+      const labels = this.cmp.labels;
+      const grid = "#EAEAEA";
+      const tick = { color: "#787774", font: { family: "Geist Sans, system-ui", size: 11 } };
+      const legend = { legend: { position: "bottom", labels: { ...tick, boxWidth: 12, padding: 14 } } };
+      const OLD = "#C9C9C7", NEW = "#111111";
+      const pctAxis = { min: 0, max: 100, grid: { color: grid }, ticks: { ...tick, callback: (v) => v + "%" } };
+
+      this._chart("chartCmpClass", {
+        type: "bar",
+        data: {
+          labels: labels.map((c) => this.cmpCat(c)),
+          datasets: [
+            { label: "старый", data: labels.map((c) => 100 * o.holdout.per_class[c].recall), backgroundColor: OLD, borderRadius: 5 },
+            { label: "новый", data: labels.map((c) => 100 * n.holdout.per_class[c].recall), backgroundColor: NEW, borderRadius: 5 },
+          ],
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false, plugins: legend,
+          scales: { x: { grid: { display: false }, ticks: tick }, y: pctAxis },
+        },
+      });
+
+      this._chart("chartCmpGap", {
+        type: "bar",
+        data: {
+          labels: ["старый датасет", "новый датасет"],
+          datasets: [
+            { label: "F1 на своём 25%-срезе", data: [100 * o.in_distribution_f1.mean, 100 * n.in_distribution_f1.mean], backgroundColor: OLD, borderRadius: 5 },
+            { label: "F1 на отложенном наборе", data: [100 * o.holdout.macro_f1, 100 * n.holdout.macro_f1], backgroundColor: NEW, borderRadius: 5 },
+          ],
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false, plugins: legend,
+          scales: { x: { grid: { display: false }, ticks: tick }, y: pctAxis },
+        },
+      });
+
+      const vs = this.cmp.versions;
+      this._chart("chartCmpCurve", {
+        type: "line",
+        data: {
+          labels: vs.map((v) => v.id + " (" + v.stats.n + ")"),
+          datasets: [
+            { label: "accuracy (отложенный)", data: vs.map((v) => 100 * v.holdout.accuracy), borderColor: NEW, backgroundColor: NEW, tension: 0.25 },
+            { label: "пойманные угрозы", data: vs.map((v) => 100 * v.holdout.threat_recall), borderColor: "#9F2F2D", backgroundColor: "#9F2F2D", tension: 0.25 },
+            { label: "F1 на своём срезе", data: vs.map((v) => 100 * v.in_distribution_f1.mean), borderColor: OLD, backgroundColor: OLD, borderDash: [5, 4], tension: 0.25 },
+          ],
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false, plugins: legend,
+          scales: { x: { grid: { display: false }, ticks: tick }, y: { ...pctAxis, min: 30 } },
+        },
+      });
     },
 
     // ===================================================== top bar

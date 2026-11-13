@@ -1269,14 +1269,241 @@
            style="background:#EDF3EC;color:#346538;border-color:#CFE2D0">
         <i class="ph ph-check-circle text-[14px] mt-px shrink-0"></i><span x-text="watchFollowNote"></span>
       </div>
-      <div class="rounded-card border border-line bg-surface shadow-diffuse overflow-hidden relative">
+      <!-- ===== Как работает поиск по графу (пояснение) ===== -->
+      <div class="rounded-card border border-line bg-surface shadow-diffuse p-5 mb-4">
+        <div class="flex items-start gap-3">
+          <span class="grid place-items-center w-9 h-9 rounded-soft border border-line text-ink shrink-0">
+            <i class="ph ph-path text-[18px]"></i>
+          </span>
+          <div class="min-w-0">
+            <h3 class="text-[15px] font-semibold tracking-tight">Поиск по графу: как найти сеть мошенников</h3>
+            <p class="text-[12px] text-muted mt-1 leading-snug max-w-[980px]">
+              Одна схема обычно работает через много аккаунтов. Если они используют общую ссылку, Telegram-канал или кошелёк,
+              в графе они связаны. Два алгоритма поиска находят <b>всю сеть</b> вокруг поста и <b>цепочку улик</b> между двумя объектами.
+            </p>
+          </div>
+          <button @click="gsHelp = !gsHelp" class="lift ml-auto shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-soft border border-line bg-canvas text-[12px] font-medium hover:bg-surface">
+            <i class="ph text-[14px]" :class="gsHelp ? 'ph-caret-up' : 'ph-caret-down'"></i>
+            <span x-text="gsHelp ? 'Скрыть объяснение' : 'Как это работает'"></span>
+          </button>
+        </div>
+
+        <div x-show="gsHelp" x-cloak class="mt-4 grid grid-cols-12 gap-4">
+          <div class="col-span-12 lg:col-span-4 rounded-soft border border-line p-4">
+            <div class="text-[11px] font-semibold uppercase tracking-wide text-muted">1 · Граф</div>
+            <p class="text-[12px] leading-snug mt-2">
+              <b>Узлы</b>: посты и сущности из них (ссылки, Telegram, кошельки, телефоны, промокоды, бренды).
+              <b>Ребро</b>: «пост содержит сущность». Если два поста упоминают один кошелёк, они связаны через него.
+            </p>
+            <div class="mt-3 text-[12px] font-semibold">Сила связи = стоимость ребра</div>
+            <table class="w-full text-[12px] mt-1">
+              <tr><td class="py-0.5"><span class="inline-block w-2.5 h-2.5 rounded-full bg-[#346538] mr-1.5"></span>сильная</td><td class="text-muted">ссылка, Telegram, кошелёк, телефон</td><td class="font-mono text-right">1</td></tr>
+              <tr><td class="py-0.5"><span class="inline-block w-2.5 h-2.5 rounded-full bg-[#956400] mr-1.5"></span>средняя</td><td class="text-muted">уникальный промокод, обещание выплат</td><td class="font-mono text-right">2</td></tr>
+              <tr><td class="py-0.5"><span class="inline-block w-2.5 h-2.5 rounded-full bg-[#9F2F2D] mr-1.5"></span>слабая</td><td class="text-muted">бренд казино, «Promo Code», «2025»</td><td class="font-mono text-right">4</td></tr>
+            </table>
+            <p class="text-[11px] text-muted mt-2 leading-snug">1xBet упоминают тысячи несвязанных людей, поэтому общий бренд — слабая улика. По умолчанию слабые связи выключены.</p>
+          </div>
+
+          <div class="col-span-12 lg:col-span-4 rounded-soft border border-line p-4">
+            <div class="text-[11px] font-semibold uppercase tracking-wide text-muted">2 · BFS — поиск в ширину</div>
+            <p class="text-[12px] leading-snug mt-2">
+              Начинает со стартового узла и расходится <b>слоями, как круги по воде</b>:
+              слой 1 — соседи старта, слой 2 — соседи соседей и так далее до заданной глубины.
+              Узлы ждут в <b>очереди FIFO</b> (первым пришёл — первым обработан), поэтому ближние узлы всегда обходятся раньше дальних.
+            </p>
+            <div class="mt-3 flex items-center gap-1.5 text-[11px]">
+              <template x-for="i in [0,1,2,3]" :key="i">
+                <span class="inline-flex items-center gap-1"><span class="w-3 h-3 rounded-full" :style="'background:' + _gsLayerColor(i)[0]"></span><span x-text="i === 0 ? 'старт' : 'слой ' + i"></span><span class="text-muted mx-1" x-show="i < 3">→</span></span>
+              </template>
+            </div>
+            <p class="text-[11px] text-muted mt-2 leading-snug"><b class="text-ink">Зачем:</b> найти всю сеть вокруг подозрительного поста, а не блокировать аккаунты по одному.</p>
+          </div>
+
+          <div class="col-span-12 lg:col-span-4 rounded-soft border border-line p-4">
+            <div class="text-[11px] font-semibold uppercase tracking-wide text-muted">3 · Uniform-cost search — самая доказательная цепочка</div>
+            <p class="text-[12px] leading-snug mt-2">
+              Ищет путь с <b>наименьшей суммой стоимостей</b>. Узлы ждут в <b>очереди с приоритетом</b>,
+              и алгоритм всегда раскрывает самый «дешёвый». Поэтому он предпочтёт длинную цепочку сильных улик короткой цепочке слабых.
+            </p>
+            <svg viewBox="0 0 300 92" class="w-full mt-2" role="img" aria-label="Пример: путь A–бренд–B стоит 8, путь A–кошелёк–C–Telegram–B стоит 4, алгоритм выбирает второй">
+              <line x1="30" y1="18" x2="150" y2="18" stroke="#E9A48C" stroke-width="2" stroke-dasharray="5 4"/>
+              <line x1="150" y1="18" x2="270" y2="18" stroke="#E9A48C" stroke-width="2" stroke-dasharray="5 4"/>
+              <line x1="30" y1="18" x2="90" y2="70" stroke="#9F2F2D" stroke-width="3"/>
+              <line x1="90" y1="70" x2="150" y2="70" stroke="#9F2F2D" stroke-width="3"/>
+              <line x1="150" y1="70" x2="210" y2="70" stroke="#9F2F2D" stroke-width="3"/>
+              <line x1="210" y1="70" x2="270" y2="18" stroke="#9F2F2D" stroke-width="3"/>
+              <circle cx="30" cy="18" r="9" fill="#111111"/><text x="30" y="22" font-size="10" fill="#fff" text-anchor="middle">A</text>
+              <circle cx="270" cy="18" r="9" fill="#111111"/><text x="270" y="22" font-size="10" fill="#fff" text-anchor="middle">B</text>
+              <rect x="118" y="9" width="64" height="18" rx="4" fill="#fff" stroke="#E9A48C"/><text x="150" y="22" font-size="9" fill="#787774" text-anchor="middle">1xbet · 4</text>
+              <rect x="56" y="61" width="68" height="18" rx="4" fill="#fff" stroke="#9F2F2D"/><text x="90" y="74" font-size="9" fill="#111" text-anchor="middle">кошелёк · 1</text>
+              <circle cx="150" cy="70" r="9" fill="#9F2F2D"/><text x="150" y="74" font-size="10" fill="#fff" text-anchor="middle">C</text>
+              <rect x="174" y="61" width="72" height="18" rx="4" fill="#fff" stroke="#9F2F2D"/><text x="210" y="74" font-size="9" fill="#111" text-anchor="middle">Telegram · 1</text>
+            </svg>
+            <p class="text-[11px] text-muted leading-snug">Сверху 2 шага, но стоимость 4 + 4 = 8. Снизу 4 шага, стоимость 1 + 1 + 1 + 1 = 4. Алгоритм выбирает нижний путь: улики сильнее.</p>
+            <p class="text-[11px] text-muted mt-1 leading-snug"><b class="text-ink">Почему не A*:</b> в этом графе нет оценки расстояния до цели, а A* с нулевой эвристикой и есть uniform-cost search.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-12 gap-4">
+      <div class="col-span-12 xl:col-span-8 rounded-card border border-line bg-surface shadow-diffuse overflow-hidden relative">
         <!-- loading overlay -->
         <div x-show="graphLoading" x-cloak class="absolute inset-0 z-10 grid place-items-center bg-surface/70 backdrop-blur-[1px]">
           <div class="flex items-center gap-2 text-[13px] text-muted">
             <i class="ph ph-circle-notch animate-spin text-[18px]"></i> Строим граф связей…
           </div>
         </div>
-        <div id="graph" class="w-full h-[calc(100vh-220px)]"></div>
+        <!-- подсказка в режиме выбора узла -->
+        <div x-show="gsPick" x-cloak class="absolute top-3 left-1/2 -translate-x-1/2 z-10 rounded-full bg-ink text-white text-[12px] px-3 py-1.5 shadow-diffuse flex items-center gap-2">
+          <i class="ph ph-cursor-click text-[14px]"></i>
+          <span x-text="gsPick === 'start' ? 'Кликните узел — он станет стартом поиска' : (gsPick === 'source' ? 'Кликните узел — откуда искать путь' : 'Кликните узел — куда искать путь')"></span>
+          <button @click="gsPick = ''" class="ml-1 opacity-70 hover:opacity-100" aria-label="Отменить выбор"><i class="ph ph-x"></i></button>
+        </div>
+        <div id="graph" class="w-full h-[calc(100vh-220px)] min-h-[560px]"></div>
+      </div>
+
+      <!-- ===== Панель поиска ===== -->
+      <div class="col-span-12 xl:col-span-4 rounded-card border border-line bg-surface shadow-diffuse p-4 flex flex-col gap-3 xl:h-[calc(100vh-220px)] xl:min-h-[560px] overflow-auto">
+        <div class="flex rounded-soft border border-line p-0.5 bg-canvas text-[12px]">
+          <button @click="gsMode = 'bfs'; gsResetHighlight()" class="flex-1 px-2 py-1.5 rounded-[6px]" :class="gsMode === 'bfs' ? 'bg-surface shadow-sm font-medium' : 'text-muted'">Сеть вокруг узла · BFS</button>
+          <button @click="gsMode = 'path'; gsResetHighlight()" class="flex-1 px-2 py-1.5 rounded-[6px]" :class="gsMode === 'path' ? 'bg-surface shadow-sm font-medium' : 'text-muted'">Путь между узлами · UCS</button>
+        </div>
+
+        <!-- выбор узлов -->
+        <template x-if="gsMode === 'bfs'">
+          <div class="space-y-2">
+            <div class="text-[11px] text-muted">Старт</div>
+            <div class="flex items-center gap-2">
+              <div class="flex-1 min-w-0 truncate text-[13px] px-2.5 py-1.5 rounded-soft border border-line bg-canvas" x-text="gsStart ? gsStart.name : 'не выбран'" :title="gsStart ? gsStart.id : ''"></div>
+              <button @click="gsStartPick('start')" class="lift shrink-0 px-2.5 py-1.5 rounded-soft border text-[12px]" :class="gsPick === 'start' ? 'bg-ink text-white border-ink' : 'border-line bg-surface hover:bg-canvas'"><i class="ph ph-cursor-click"></i> на графе</button>
+            </div>
+            <label class="flex items-center gap-2 text-[12px] text-muted pt-1">
+              глубина
+              <input type="range" min="1" max="5" x-model.number="gsDepth" class="flex-1 accent-[#9F2F2D]" aria-label="Глубина поиска" />
+              <span class="font-mono text-ink w-4" x-text="gsDepth"></span>
+            </label>
+          </div>
+        </template>
+        <template x-if="gsMode === 'path'">
+          <div class="space-y-2">
+            <div class="text-[11px] text-muted">Откуда</div>
+            <div class="flex items-center gap-2">
+              <div class="flex-1 min-w-0 truncate text-[13px] px-2.5 py-1.5 rounded-soft border border-line bg-canvas" x-text="gsSource ? gsSource.name : 'не выбрано'" :title="gsSource ? gsSource.id : ''"></div>
+              <button @click="gsStartPick('source')" class="lift shrink-0 px-2.5 py-1.5 rounded-soft border text-[12px]" :class="gsPick === 'source' ? 'bg-ink text-white border-ink' : 'border-line bg-surface hover:bg-canvas'"><i class="ph ph-cursor-click"></i> на графе</button>
+            </div>
+            <div class="text-[11px] text-muted">Куда</div>
+            <div class="flex items-center gap-2">
+              <div class="flex-1 min-w-0 truncate text-[13px] px-2.5 py-1.5 rounded-soft border border-line bg-canvas" x-text="gsTarget ? gsTarget.name : 'не выбрано'" :title="gsTarget ? gsTarget.id : ''"></div>
+              <button @click="gsStartPick('target')" class="lift shrink-0 px-2.5 py-1.5 rounded-soft border text-[12px]" :class="gsPick === 'target' ? 'bg-ink text-white border-ink' : 'border-line bg-surface hover:bg-canvas'"><i class="ph ph-cursor-click"></i> на графе</button>
+            </div>
+          </div>
+        </template>
+
+        <label class="flex items-start gap-2 text-[12px] cursor-pointer">
+          <input type="checkbox" x-model="gsWeak" class="mt-0.5 accent-[#9F2F2D]" />
+          <span>Учитывать слабые связи <span class="text-muted">(бренды казино, общие слова вроде «Promo Code»)</span></span>
+        </label>
+
+        <div class="flex items-center gap-2">
+          <button @click="gsRun()" :disabled="gsRunning || !gsCanRun()" class="lift flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-soft bg-ink text-white text-[13px] font-medium disabled:opacity-40">
+            <i class="ph text-[15px]" :class="gsRunning ? 'ph-circle-notch animate-spin' : 'ph-play'"></i>
+            <span x-text="gsRunning ? 'Идёт поиск…' : 'Запустить поиск'"></span>
+          </button>
+          <button @click="gsUseExample()" class="lift px-3 py-2 rounded-soft border border-line bg-surface text-[12px] hover:bg-canvas" title="Подставить готовый пример из реальных данных">Пример</button>
+          <button @click="gsResetHighlight(); gsResult = null; gsPath = null; gsLog = []" class="lift px-2.5 py-2 rounded-soft border border-line bg-surface text-[12px] hover:bg-canvas" title="Снять подсветку" aria-label="Снять подсветку"><i class="ph ph-eraser"></i></button>
+        </div>
+        <div x-show="gsError" x-cloak class="text-[12px] text-[#9F2F2D]" x-text="gsError"></div>
+
+        <!-- BFS: журнал слоёв -->
+        <div x-show="gsMode === 'bfs' && gsLog.length" x-cloak class="rounded-soft border border-line p-3">
+          <div class="text-[11px] font-semibold uppercase tracking-wide text-muted mb-2">Как шёл поиск</div>
+          <template x-for="(l, i) in gsLog" :key="i">
+            <div class="flex items-start gap-2 text-[12px] py-0.5 reveal in-view">
+              <span class="w-3 h-3 rounded-full shrink-0 mt-0.5" :style="'background:' + l.color"></span>
+              <span><b x-text="l.layer === 0 ? 'Слой 0' : 'Слой ' + l.layer"></b> · <span x-text="l.text"></span></span>
+            </div>
+          </template>
+        </div>
+
+        <!-- BFS: итог -->
+        <template x-if="gsMode === 'bfs' && gsResult">
+          <div class="rounded-soft border border-line p-3 space-y-3">
+            <div class="text-[11px] font-semibold uppercase tracking-wide text-muted">Найденная сеть</div>
+            <div class="grid grid-cols-3 gap-2 text-center">
+              <div class="rounded-soft bg-canvas py-2"><div class="font-mono text-[18px] font-semibold" x-text="gsResult.stats.posts"></div><div class="text-[11px] text-muted">постов</div></div>
+              <div class="rounded-soft bg-canvas py-2"><div class="font-mono text-[18px] font-semibold" x-text="gsResult.stats.entities"></div><div class="text-[11px] text-muted">сущностей</div></div>
+              <div class="rounded-soft bg-canvas py-2"><div class="font-mono text-[18px] font-semibold" x-text="gsResult.stats.avg_risk"></div><div class="text-[11px] text-muted">ср. риск</div></div>
+            </div>
+            <div class="text-[12px] text-muted" x-show="Object.keys(gsResult.stats.entity_types).length"
+                 x-text="'Связывают: ' + Object.entries(gsResult.stats.entity_types).map(([t, n]) => gsTypeName(t) + ' × ' + n).join(', ')"></div>
+            <div class="max-h-[220px] overflow-auto divide-y divide-line">
+              <template x-for="n in gsResult.nodes.filter(x => x.type === 'post')" :key="n.id">
+                <button @click="tab = 'feed'; $nextTick(() => openPost(n.id.replace(/^post:/, '')))" class="w-full text-left py-1.5 hover:bg-canvas">
+                  <div class="flex items-center gap-2 text-[12px]">
+                    <span class="font-mono text-[11px] text-muted w-10 shrink-0" x-text="'слой ' + n.depth"></span>
+                    <span class="font-medium truncate" x-text="gsNodeName(n)"></span>
+                    <span class="ml-auto font-mono text-[11px]" x-text="'риск ' + n.risk"></span>
+                  </div>
+                  <div class="text-[11px] text-muted truncate pl-12" x-text="n.caption || ''"></div>
+                </button>
+              </template>
+            </div>
+          </div>
+        </template>
+
+        <!-- UCS: ход поиска и итог -->
+        <div x-show="gsMode === 'path' && (gsRunning || gsPath)" x-cloak class="rounded-soft border border-line p-3 space-y-2">
+          <div class="text-[11px] font-semibold uppercase tracking-wide text-muted">Как шёл поиск</div>
+          <div class="text-[12px] flex items-center gap-2">
+            <span class="w-3 h-3 rounded-full bg-[#FBF3DB] border border-[#956400] shrink-0"></span>
+            <span>раскрыто узлов: <b class="font-mono" x-text="gsExpanded"></b></span>
+          </div>
+          <p class="text-[11px] text-muted leading-snug">Жёлтые узлы на графе — раскрытые. Каждый раз алгоритм берёт из очереди узел с наименьшей стоимостью пути от старта.</p>
+        </div>
+        <template x-if="gsMode === 'path' && gsPath">
+          <div class="rounded-soft border border-line p-3 space-y-2">
+            <template x-if="gsPath.found">
+              <div class="space-y-2">
+                <div class="grid grid-cols-3 gap-2 text-center">
+                  <div class="rounded-soft bg-canvas py-2"><div class="font-mono text-[18px] font-semibold" x-text="gsPath.cost"></div><div class="text-[11px] text-muted">стоимость</div></div>
+                  <div class="rounded-soft bg-canvas py-2"><div class="font-mono text-[18px] font-semibold" x-text="gsPath.hops"></div><div class="text-[11px] text-muted">шагов</div></div>
+                  <div class="rounded-soft bg-canvas py-2"><div class="font-mono text-[18px] font-semibold" x-text="gsPath.expanded_count"></div><div class="text-[11px] text-muted">раскрыто</div></div>
+                </div>
+                <div class="text-[11px] font-semibold uppercase tracking-wide text-muted pt-1">Цепочка улик</div>
+                <div>
+                  <template x-for="(n, i) in gsPath.path" :key="n.id">
+                    <div>
+                      <div class="flex items-center gap-2 text-[12px] py-1">
+                        <span class="w-2.5 h-2.5 rounded-full shrink-0" :class="n.type === 'post' ? 'bg-[#9F2F2D]' : 'bg-white border border-[#787774]'"></span>
+                        <span class="text-muted w-20 shrink-0" x-text="gsTypeName(n.type)"></span>
+                        <span class="font-medium truncate" x-text="gsNodeName(n)" :title="n.caption || n.label"></span>
+                      </div>
+                      <div x-show="i < gsPath.steps.length" class="pl-1 text-[11px] flex items-center gap-1.5"
+                           :class="gsPath.steps[i] && gsPath.steps[i].cost === 1 ? 'text-[#346538]' : (gsPath.steps[i] && gsPath.steps[i].cost === 2 ? 'text-[#956400]' : 'text-[#9F2F2D]')">
+                        <i class="ph ph-arrow-down"></i>
+                        <span x-text="gsPath.steps[i] ? gsPath.steps[i].strength + ' связь · +' + gsPath.steps[i].cost : ''"></span>
+                      </div>
+                    </div>
+                  </template>
+                </div>
+                <p class="text-[11px] text-muted leading-snug" x-show="gsPath.steps.every(s => s.cost === 4)">Все связи в цепочке слабые: общие бренды и слова. Это скорее совпадение, чем доказательство.</p>
+                <p class="text-[11px] text-muted leading-snug" x-show="gsPath.steps.every(s => s.cost === 1)">Все связи сильные: общие ссылки, каналы или кошельки. Это веская улика.</p>
+              </div>
+            </template>
+            <template x-if="!gsPath.found">
+              <div class="text-[12px] leading-snug">
+                <b>Пути нет.</b> Алгоритм раскрыл <span class="font-mono" x-text="gsPath.expanded_count"></span> узлов и не дошёл до цели:
+                <span x-show="!gsWeak">через сильные и средние улики эти узлы не связаны. Включите слабые связи и запустите снова.</span>
+                <span x-show="gsWeak">эти узлы не связаны в графе совсем.</span>
+              </div>
+            </template>
+          </div>
+        </template>
+
+        <p x-show="!gsLog.length && !gsPath && !gsRunning" class="text-[12px] text-muted leading-snug">
+          Нажмите <b>«Пример»</b>, чтобы подставить узлы из реальных данных, или выберите узел кнопкой «на графе» и кликом по графу. Затем «Запустить поиск».
+        </p>
+      </div>
       </div>
       <div class="flex items-center gap-4 mt-3 text-[11px] text-muted">
         <span class="inline-flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full" style="background:#9F2F2D"></span>эскалация ≥70</span>

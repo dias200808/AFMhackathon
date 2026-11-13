@@ -87,3 +87,37 @@ def test_graph_default_no_filter_includes_all_revealed(client):
     node_ids = {n["id"] for n in resp.json()["nodes"]}
     # min_risk=0 по умолчанию -> все revealed-посты
     assert {"post:p1", "post:p2", "post:p3"}.issubset(node_ids)
+
+
+# --- поиск по графу ----------------------------------------------------------
+
+def test_graph_network_bfs_route(client):
+    resp = client.get("/api/graph/network", params={"node": "post:p1", "depth": 2})
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["algorithm"] == "bfs"
+    assert data["layers"][0] == ["post:p1"]
+    ids = {n["id"] for n in data["nodes"]}
+    assert "post:p2" in ids          # связан с p1 через общий Telegram
+    assert "post:p3" not in ids      # не связан
+    assert data["stats"]["posts"] == 2
+
+
+def test_graph_path_route(client):
+    resp = client.get("/api/graph/path", params={"source": "post:p1", "target": "post:p2"})
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["found"] and data["hops"] == 2 and data["cost"] == 2
+    assert data["steps"][0]["strength"] == "сильная"
+    assert data["path"][0]["author"] == "@p1"
+
+
+def test_graph_path_unknown_node_404(client):
+    resp = client.get("/api/graph/path", params={"source": "post:p1", "target": "post:nope"})
+    assert resp.status_code == 404
+
+
+def test_graph_search_examples(client):
+    data = client.get("/api/graph/search-examples").json()
+    assert data["network_start"]["id"] == "entity:telegram:casinox"
+    assert data["network_posts"] == 2

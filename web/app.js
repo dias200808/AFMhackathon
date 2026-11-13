@@ -277,6 +277,26 @@ function kozApp() {
     graphLoading: false,
     graphEmpty: false,
     _network: null,
+    _graphData: null,      // vis.DataSet узлов/рёбер текущего графа (для подсветки поиска)
+    _graphOrig: null,      // исходные стили узлов/рёбер — чтобы снять подсветку
+
+    // --- поиск по графу (BFS / uniform-cost search; GET /api/graph/network|path) ---
+    gsMode: "bfs",         // bfs | path
+    gsStart: null,         // {id, name} — старт BFS
+    gsSource: null,        // {id, name} — откуда путь
+    gsTarget: null,        // {id, name} — куда путь
+    gsPick: "",            // '' | start | source | target — следующий клик по графу выбирает узел
+    gsDepth: 3,
+    gsWeak: false,         // учитывать слабые связи (бренды, общие слова)
+    gsRunning: false,
+    gsError: "",
+    gsResult: null,        // ответ /api/graph/network
+    gsPath: null,          // ответ /api/graph/path
+    gsLog: [],             // строки пошагового журнала анимации
+    gsExpanded: 0,         // сколько узлов раскрыто (анимация uniform-cost)
+    gsHelp: true,          // показывать блок «Как это работает»
+    gsExamples: null,
+    _gsTimers: [],
 
     // --- мини-граф связей в карточке анализа (отдельный экземпляр сети) ---
     detailGraphNote: "",   // RU-текст заглушки, если граф не построить
@@ -1190,7 +1210,16 @@ function kozApp() {
             _brand: this.isOperatorNode(n) ? n.label : null,
           };
         });
-        const edges = (g.edges || []).map((e) => ({
+        // пост может упомянуть одну сущность дважды — ребро нужно одно (уникальный id)
+        const seenEdges = new Set();
+        const uniqEdges = (g.edges || []).filter((e) => {
+          const k = e.source + "|" + e.target;
+          if (seenEdges.has(k)) return false;
+          seenEdges.add(k);
+          return true;
+        });
+        const edges = uniqEdges.map((e) => ({
+          id: e.source + "|" + e.target,
           from: e.source,
           to: e.target,
           color: { color: "#EAEAEA", highlight: "#787774" },
@@ -1200,6 +1229,16 @@ function kozApp() {
         }));
 
         const data = { nodes: new vis.DataSet(nodes), edges: new vis.DataSet(edges) };
+        // для поиска по графу: запоминаем исходные стили, чтобы снимать подсветку
+        this._gsClearTimers();
+        this._graphData = data;
+        this._graphOrig = {
+          nodes: new Map(nodes.map((n) => [n.id, { color: n.color, font: n.font, borderWidth: n.borderWidth }])),
+          edges: new Map(edges.map((e) => [e.id, { color: e.color, width: e.width }])),
+        };
+        this.gsResult = null;
+        this.gsPath = null;
+        this.gsLog = [];
         const options = {
           interaction: { hover: true, tooltipDelay: 120 },
           // improvedLayout (Kamada-Kawai пре-лейаут) ~O(n^2) — для больших графов выкл.
@@ -1222,6 +1261,11 @@ function kozApp() {
         this._network.on("click", (params) => {
           if (!params.nodes.length) return;
           const node = data.nodes.get(params.nodes[0]);
+          if (this.gsPick && node) {
+            // режим выбора узла для поиска по графу: клик выбирает, а не открывает
+            this.gsPickNode(node);
+            return;
+          }
           if (node && node._post) {
             // узел-пост: открыть разбор (прежнее поведение)
             this.tab = "feed";
@@ -1235,6 +1279,181 @@ function kozApp() {
         this.graphLoading = false;
         this.graphError = "Не удалось построить граф: " + e.message;
       }
+    },
+
+    // ===================================================== поиск по графу
+    // BFS (поиск в ширину) — сеть вокруг узла; uniform-cost search — самая
+    // «дешёвая» (доказательная) цепочка между двумя узлами. Бэкенд возвращает
+    // порядок обхода, здесь он проигрывается анимацией на графе.
+    gsTypeName(t) {
+      return ({
+        post: "пост", url: "ссылка", telegram: "Telegram", handle: "аккаунт",
+        crypto_wallet: "кошелёк", phone: "телефон", whatsapp: "WhatsApp",
+        promo_code: "промокод", payout_promise: "обещание выплат",
+        casino_brand: "бренд казино", betting_brand: "букмекер",
+      })[t] || t || "узел";
+    },
+    gsNodeName(n) {
+      if (!n) return "—";
+      if (n.author) return n.author;
+      if (n.type === "post" || (n.id || "").startsWith("post:")) return "пост " + (n.label || n.id).replace(/^post:/, "");
+      return n.label || n.id;
+    },
+    gsStartPick(which) {
+      this.gsPick = this.gsPick === which ? "" : which;
+    },
+    gsPickNode(node) {
+      const type = (node.id || "").startsWith("post:") ? "post" : (node.id.split(":")[1] || "");
+      const pick = { id: node.id, name: this.gsNodeName({ id: node.id, type, label: String(node.label || "").replace(/^✓ /, "") }) };
+      if (this.gsPick === "start") this.gsStart = pick;
+      if (this.gsPick === "source") this.gsSource = pick;
+      if (this.gsPick === "target") this.gsTarget = pick;
+      this.gsPick = "";
+    },
+    async gsUseExample() {
+      this.gsError = "";
+      try {
+        const r = await fetch("/api/graph/search-examples?min_risk=" + this.graphMinRisk);
+        const ex = await r.json();
+        if (!r.ok) throw new Error(ex.detail || "HTTP " + r.status);
+        this.gsExamples = ex;
+        if (this.gsMode === "bfs") {
+          if (!ex.network_start) throw new Error("в графе нет сетей из 2+ постов");
+          this.gsStart = { id: ex.network_start.id, name: this.gsNodeName(ex.network_start) };
+          this.gsWeak = false;
+        } else {
+          if (!ex.path_source) throw new Error("в графе меньше двух сетей для примера");
+          this.gsSource = { id: ex.path_source.id, name: this.gsNodeName(ex.path_source) };
+          this.gsTarget = { id: ex.path_target.id, name: this.gsNodeName(ex.path_target) };
+        }
+      } catch (e) {
+        this.gsError = "Пример недоступен: " + e.message;
+      }
+    },
+    gsCanRun() {
+      return this.gsMode === "bfs" ? !!this.gsStart : !!(this.gsSource && this.gsTarget);
+    },
+    _gsClearTimers() {
+      (this._gsTimers || []).forEach((t) => clearTimeout(t));
+      this._gsTimers = [];
+    },
+    _gsLater(ms, fn) {
+      this._gsTimers.push(setTimeout(fn, ms));
+    },
+    gsResetHighlight() {
+      this._gsClearTimers();
+      this.gsRunning = false;
+      const d = this._graphData, o = this._graphOrig;
+      if (!d || !o) return;
+      d.nodes.update([...o.nodes].map(([id, s]) => ({ id, ...s })));
+      d.edges.update([...o.edges].map(([id, s]) => ({ id, ...s })));
+    },
+    _gsDimAll() {
+      const d = this._graphData;
+      if (!d) return;
+      d.nodes.update(d.nodes.getIds().map((id) => ({
+        id, borderWidth: 1,
+        color: { background: "#F4F3F0", border: "#E4E2DC" },
+        font: { color: "#C9C7C0", size: 11 },
+      })));
+      d.edges.update(d.edges.getIds().map((id) => ({ id, color: { color: "#F1F0EC" }, width: 1 })));
+    },
+    _gsPaintNode(id, bg, border, width) {
+      if (!this._graphData || !this._graphData.nodes.get(id)) return;
+      this._graphData.nodes.update({
+        id, borderWidth: width || 2,
+        color: { background: bg, border: border, highlight: { background: bg, border: "#111111" } },
+        font: { color: "#111111", size: 13 },
+      });
+    },
+    _gsPaintEdge(a, b, color, width) {
+      const d = this._graphData;
+      if (!d) return;
+      const id = d.edges.get(a + "|" + b) ? a + "|" + b : (d.edges.get(b + "|" + a) ? b + "|" + a : null);
+      if (id) d.edges.update({ id, color: { color, highlight: color }, width });
+    },
+    async gsRun() {
+      if (!this.gsCanRun()) return;
+      this.gsError = "";
+      this.gsResetHighlight();
+      this.gsResult = null;
+      this.gsPath = null;
+      this.gsLog = [];
+      this.gsExpanded = 0;
+      this.gsRunning = true;
+      try {
+        let url;
+        if (this.gsMode === "bfs") {
+          url = "/api/graph/network?node=" + encodeURIComponent(this.gsStart.id) + "&depth=" + this.gsDepth;
+        } else {
+          url = "/api/graph/path?source=" + encodeURIComponent(this.gsSource.id) + "&target=" + encodeURIComponent(this.gsTarget.id);
+        }
+        url += "&weak=" + (this.gsWeak ? 1 : 0) + "&min_risk=" + this.graphMinRisk;
+        const r = await fetch(url);
+        const d = await r.json();
+        if (!r.ok) throw new Error(d.detail || "HTTP " + r.status);
+        if (this.gsMode === "bfs") this._gsAnimateBfs(d);
+        else this._gsAnimatePath(d);
+      } catch (e) {
+        this.gsRunning = false;
+        this.gsError = "Поиск не выполнен: " + e.message;
+      }
+    },
+    // цвет слоя BFS: старт тёмный, дальше всё светлее — «круги по воде»
+    _gsLayerColor(i) {
+      const pal = [["#111111", "#111111"], ["#9F2F2D", "#7A2220"], ["#D0674F", "#9F2F2D"], ["#E9A48C", "#C8553D"], ["#F3CDBE", "#D0674F"], ["#F8E3DA", "#E9A48C"], ["#FBEFEA", "#F3CDBE"]];
+      return pal[Math.min(i, pal.length - 1)];
+    },
+    _gsAnimateBfs(res) {
+      this._gsDimAll();
+      const byId = Object.fromEntries(res.nodes.map((n) => [n.id, n]));
+      const parent = Object.fromEntries(res.tree_edges.map((e) => [e.target, e.source]));
+      const step = 900;
+      res.layers.forEach((layer, i) => {
+        this._gsLater(i * step, () => {
+          const [bg, border] = this._gsLayerColor(i);
+          layer.forEach((id) => {
+            this._gsPaintNode(id, bg, border, i === 0 ? 4 : 2);
+            if (parent[id]) this._gsPaintEdge(parent[id], id, border, 2.5);
+          });
+          const posts = layer.filter((id) => byId[id] && byId[id].type === "post").length;
+          const ents = layer.length - posts;
+          let text;
+          if (i === 0) text = "Старт: " + this.gsNodeName(byId[layer[0]]) + " (" + this.gsTypeName(byId[layer[0]].type) + ")";
+          else text = "Найдено " + layer.length + ": " + [posts ? posts + " пост." : "", ents ? ents + " сущн." : ""].filter(Boolean).join(", ") + " — соседи узлов слоя " + (i - 1);
+          this.gsLog.push({ layer: i, text, color: bg });
+        });
+      });
+      this._gsLater(res.layers.length * step, () => {
+        this.gsResult = res;
+        this.gsRunning = false;
+        if (this._network) this._network.fit({ nodes: res.order, animation: { duration: 600 } });
+      });
+    },
+    _gsAnimatePath(res) {
+      this._gsDimAll();
+      const exp = res.expanded || [];
+      // анимация раскрытия: до 60 узлов — 140 мс на узел, больше — быстрее
+      const per = exp.length > 60 ? Math.max(25, Math.round(6000 / exp.length)) : 140;
+      exp.forEach((id, i) => {
+        this._gsLater(i * per, () => {
+          this._gsPaintNode(id, "#FBF3DB", "#956400", 2);
+          this.gsExpanded = i + 1;
+        });
+      });
+      const t = exp.length * per + 300;
+      this._gsLater(t, () => {
+        if (res.found) {
+          const ids = res.path.map((n) => n.id);
+          ids.forEach((id, i) => {
+            this._gsPaintNode(id, i === 0 || i === ids.length - 1 ? "#111111" : "#9F2F2D", "#7A2220", 4);
+            if (i) this._gsPaintEdge(ids[i - 1], id, "#9F2F2D", 5);
+          });
+          if (this._network) this._network.fit({ nodes: ids, animation: { duration: 600 } });
+        }
+        this.gsPath = res;
+        this.gsRunning = false;
+      });
     },
 
     // ===================================================== trends

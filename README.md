@@ -12,6 +12,7 @@ Three AI topics in one pipeline: **Search** (BFS, uniform-cost search), **Classi
 
 | Deliverable | Link |
 |---|---|
+| Presentation (7 slides) | [PPTX](docs/final/KOZ_final_presentation.pptx) · [PDF](docs/final/KOZ_final_presentation.pdf) |
 | Technical Report | [docs/final/TECHNICAL_REPORT.md](docs/final/TECHNICAL_REPORT.md) |
 | Demo video (2:48) | [docs/final/demo_video.mp4](docs/final/demo_video.mp4) |
 | AI Usage Declaration | [docs/final/AI_USAGE_DECLARATION.md](docs/final/AI_USAGE_DECLARATION.md) |

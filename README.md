@@ -5,6 +5,18 @@
 ИИ-консоль аналитика **АФМ** для выявления признаков **незаконного игорного бизнеса и финансовых пирамид** в соцсетях.
 Проект трека **«AI Media Watch»** хакатона **АФМ AI Hackathon 2026**.
 
+## AI Fundamentals — Final Project
+
+Three AI topics in one pipeline: **Search** (BFS, uniform-cost search), **Classical ML**
+(TF-IDF + logistic regression), **Neural networks** (Whisper, EasyOCR, CLIP).
+
+| Deliverable | Link |
+|---|---|
+| Technical Report | [docs/final/TECHNICAL_REPORT.md](docs/final/TECHNICAL_REPORT.md) |
+| Demo video (2:48) | [docs/final/demo_video.mp4](docs/final/demo_video.mp4) |
+| AI Usage Declaration | [docs/final/AI_USAGE_DECLARATION.md](docs/final/AI_USAGE_DECLARATION.md) |
+| Team Contribution Statement | [docs/final/TEAM_CONTRIBUTION.md](docs/final/TEAM_CONTRIBUTION.md) |
+
 ## Старый vs новый датасет (ML-эксперимент)
 
 Вкладка **«Старый vs новый»** в консоли показывает, что даёт расширение данных. Модель одна и та же

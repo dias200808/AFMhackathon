@@ -7,6 +7,9 @@
 torch
 torchvision
 faster-whisper
+# PyAV 16+ убрал аргумент metadata_errors, на котором faster-whisper читает аудио:
+# без этого ограничения Whisper молча возвращает пустую расшифровку.
+av>=11,<16
 easyocr
 open-clip-torch
 opencv-python-headless

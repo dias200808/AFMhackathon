@@ -1,7 +1,7 @@
 # AI Usage Declaration
 
 **Project:** KÓZ · AI Media Watch — AI Fundamentals Final Project
-**Student:** Dias [Surname]
+**Student:** Dias Akhmetbek (individual project)
 
 ## AI tools used
 

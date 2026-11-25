@@ -2,14 +2,13 @@
 
 **Project:** KÓZ · AI Media Watch — AI Fundamentals Final Project
 
-> ⚠️ Fill in before submission: team members for this course and the exact split of work.
-
 ## Team (AI Fundamentals)
+
+This is an **individual project**.
 
 | Member | Role in the final project |
 |---|---|
-| Dias [Surname] | [e.g. individual project / team lead] |
-| [Name, if any] | [role] |
+| Dias Akhmetbek | sole author of the final-project work listed below |
 
 ## Origin of the code base
 
@@ -30,6 +29,6 @@ The base system KÓZ (classifier, extractors, feed, monitoring, PDF reports) was
 
 ## Declaration
 
-Each team member can explain the whole project and answer questions about all three AI topics.
+I can explain the whole project and answer questions about all three AI topics.
 
-Signed: ____________________   Date: ____________
+Signed: Dias Akhmetbek   Date: ____________
